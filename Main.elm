@@ -10,6 +10,7 @@ import Html exposing (Html)
 import Html.Attributes exposing (width, height, style)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (vec3, Vec3, toTuple)
+import Math.Vector4 as Vec4
 import Time exposing (Time)
 import WebGL exposing (Mesh, Shader)
 import Mouse exposing (..)
@@ -92,7 +93,7 @@ getCameraPosFromAngle angle heightOfCamera =
 
 angleOfCamera : Mouse.Position -> Float
 angleOfCamera { x, y } =
-    (toFloat x) / 1000 * 3.6
+    (toFloat x) / 1000 * 7.2
 
 
 subscriptions : Model -> Sub Msg
@@ -131,27 +132,39 @@ type alias Position =
     , y : Float
     }
 
+undefined : () -> a
+undefined _ = Debug.crash "Undefined!"
 
 getClickPosition : Model -> Position -> ( Vertex, Vertex )
 getClickPosition model { x, y } =
     let
         normalizedPosition =
-            vec3 ((x * 2) / 1000 - 1) (1 - (2 * y) / 1000) 1
+            ( (x * 2) / 1000 - 1,  (1 - (2 * y) / 1000))
 
-        mat4 =
-            Maybe.withDefault Mat4.identity (Mat4.inverse (camera model))
+        homogeneousClipCoordinates = Vec4.vec4 (Tuple.first normalizedPosition) (Tuple.second normalizedPosition) -1  1
 
-        inversedVec3 =
-            Mat4.transform mat4 normalizedPosition
+        inversedProjectionMatrix =
+            Mat4.inverseOrthonormal (camera model)
 
-        norm =
-            Vec3.normalize inversedVec3
+        vec4AppliedInversedProjectionMatrix =
+            undefined -- Mat4.transform inversedProjectionMatrix homogeneousClipCoordinates
 
-        ( vx, vy, vz ) =
-            toTuple norm
+        inversedViewMatrix =
+            undefined -- Mat4.inverseOrthonormal <something>
+
+        vec4AppliedInversedViewMatrix =
+            undefined
+
+        vec3NormalizedRay =
+            undefined -- Vec3.normalize (vec3 <x y z from vec4AppliedInversedViewMatrix> )
+
+        fromVec3 =
+            model.cameraPos
+
+        toVec3 =
+            undefined
     in
-        Debug.log (toString norm)
-            ( Vertex (vec3 0 0 0) (vec3 vx vy vz), Vertex (vec3 0 0 0) (vec3 3 3 2) )
+            ( Vertex (vec3 0 0 0) fromVec3, Vertex (vec3 0 0 0) (vec3  0 0 0 )) --toVec3)
 
 
 createLineFromVec3 : ( Vec3, Vec3 ) -> ( Vertex, Vertex )
